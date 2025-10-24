@@ -1,0 +1,58 @@
+services:
+    nginx:
+        image: nginx:1.28
+        volumes:
+            # Mount the application code for live updates
+            - ./:/var/www/order-status-api
+            # Mount the Nginx configuration file
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+        ports:
+            - "8002:80"
+        environment:
+            - NGINX_HOST=localhost
+        networks:
+            - order-status-api-development
+        depends_on:
+            php:
+                condition: service_started # Wait for php to start
+
+    php:
+        # For the php-fpm service, we will use our common PHP-FPM Dockerfile
+        build:
+            context: .
+            dockerfile: ./docker/php/Dockerfile
+            args:
+                UID: ${UID:-1000}
+                GID: ${GID:-1000}
+        env_file:
+            # Load the environment variables from the Laravel application
+            - .env
+        user: "${UID:-1000}:${GID:-1000}" #Launch container not as the root user
+        volumes:
+            # Mount the application code for live updates
+            - ./:/var/www/order-status-api
+        networks:
+            - order-status-api-development
+        depends_on:
+            mysql:
+                condition: service_started # Wait for mysql to start
+
+    mysql:
+        image: mysql:8.0
+        tty: true
+        ports:
+            - "33063:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - mysql-data:/var/lib/mysql/
+        networks:
+            - order-status-api-development
+
+networks:
+    order-status-api-development:
+
+volumes:
+    mysql-data:
