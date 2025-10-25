@@ -26,17 +26,8 @@ class StoreRequest extends FormRequest
         return [
             'order_number' => 'required|string:max:255|unique:orders',
             'total_amount' => 'required|numeric|min:0.01|max:9999.99',
-            'tags' => 'array',
+            'tags' => 'array|nullable',
             'tags.*' => 'string|max:255',
         ];
-    }
-
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        throw new HttpResponseException(
-            response()->json([
-                'status' => false,
-                'messages' => $validator->messages(),
-            ]));
     }
 }
