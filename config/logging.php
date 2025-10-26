@@ -51,6 +51,13 @@ return [
     */
 
     'channels' => [
+
+        'orders_external' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/orders/orders_external.log'),
+            'days' => 14,
+        ],
+
         'orders' => [
             'driver' => 'daily',
             'path' => storage_path('logs/orders/orders.log'),

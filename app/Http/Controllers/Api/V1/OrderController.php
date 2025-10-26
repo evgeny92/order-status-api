@@ -34,4 +34,9 @@ class OrderController extends Controller
         return $this->orderService->updateOrderStatus($request);
     }
 
+    public function updateOrderStatusFromExternal(string $orderNumber)
+    {
+        return $this->orderService->updateOrderStatusFromExternal($orderNumber);
+    }
+
 }

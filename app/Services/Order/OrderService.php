@@ -3,14 +3,17 @@
 namespace App\Services\Order;
 
 use App\Enum\Order\OrderStatus;
-use App\Events\OrderUpdated;
+use App\Events\OrderStatusChanged;
 use App\Http\Resources\Order\OrderCreatedResource;
 use App\Http\Resources\Order\OrdersAllResource;
 use App\Http\Resources\Order\OrderShowResource;
+use App\Http\Resources\Order\OrderUpdatedExternalResource;
 use App\Http\Resources\Order\OrderUpdatedResource;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class OrderService
 {
@@ -72,7 +75,7 @@ class OrderService
                 'status' => true,
                 'message' => 'Order created successfully',
                 'data' => new OrderCreatedResource($order->load('tags')),
-            ]);
+            ],201);
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -141,7 +144,7 @@ class OrderService
 
             // If was changes, call the event
             if ($changed) {
-                event(new OrderUpdated($order));
+                event(new OrderStatusChanged($order));
             }
 
             DB::commit();
@@ -159,6 +162,51 @@ class OrderService
                 'status' => false,
                 'message' => 'Something went wrong while updating the order.',
                 'error' => config('app.debug') ? $exception->getMessage() : null,
+            ]);
+        }
+    }
+
+    public function updateOrderStatusFromExternal($orderNumber): JsonResponse
+    {
+        $order = Order::query()->where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found',
+            ]);
+        }
+
+        try {
+            $response = Http::get('https://external.integration/api/status/'.$order->order_number);
+
+            if ($response->successful()) {
+                $orderData = $response->json();
+
+                $order->status = OrderStatus::from($orderData['status'])->value;
+                $order->save();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Status updated from external successfully',
+                    'data' => new OrderUpdatedExternalResource($order),
+                ]);
+            }
+
+            Log::channel('orders_external')->error("API returned error: " . $response->status());
+
+            return response()->json([
+                'status' => false,
+                'message' => 'External API error',
+            ]);
+
+        } catch (\Exception $exception) {
+
+            Log::channel('orders_external')->error("API returned exception: " . $exception->getMessage());
+
+            return response()->json([
+                'status' => false,
+                'message' => 'External API connection failed',
             ]);
         }
     }

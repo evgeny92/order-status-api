@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Events\OrderUpdated;
+use App\Events\OrderStatusChanged;
 use App\Jobs\SendOrderNotificationJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,7 +20,7 @@ class SendOrderUpdatedNotification
     /**
      * Handle the event.
      */
-    public function handle(OrderUpdated $event): void
+    public function handle(OrderStatusChanged $event): void
     {
         //Send task to the queue
         SendOrderNotificationJob::dispatch($event->order);

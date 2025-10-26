@@ -8,4 +8,6 @@ Route::prefix('v1')->controller(OrderController::class)->group(function () {
     Route::post('orders', 'store');
     Route::get('orders/{order_number}', 'show');
     Route::post('orders/status', 'updateOrderStatus');
+    //For Test
+    Route::get('orders/{order_number}/external', 'updateOrderStatusFromExternal');
 });
