@@ -18,9 +18,10 @@ class OrderShowResource extends JsonResource
     {
         return [
             'order_number' => $this->order_number,
-            'total_amount' => Number::format($this->total_amount, 2),
+            'total_amount' => $this->total_amount_formatted,
             'status' => $this->status,
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'items' => OrderItemsResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at->toDateTimeString(),
         ];
     }

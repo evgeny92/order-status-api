@@ -52,13 +52,15 @@ class OrderService
 
     public function store($request): JsonResponse
     {
+
+        //dd($request->all());
+
         try {
 
             DB::beginTransaction();
 
             $order = new Order();
             $order->order_number = $request->order_number;
-            $order->total_amount = $request->total_amount;
             $order->status = OrderStatus::Pending;
             $order->save();
 
@@ -69,13 +71,24 @@ class OrderService
                 $order->syncTags($orderTags);
             }
 
+            $orderItems = $request->items;
+
+            if (!empty($orderItems) && count($orderItems)) {
+                $order->items()->createMany($orderItems);
+
+                $total_amount = collect($orderItems)->sum(fn($item) => $item['quantity'] * $item['price']);
+
+                $order->total_amount = $total_amount;
+                $order->save();
+            }
+
             DB::commit();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Order created successfully',
-                'data' => new OrderCreatedResource($order->load('tags')),
-            ],201);
+                'data' => new OrderCreatedResource($order->load(['tags', 'items'])),
+            ], 201);
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -91,7 +104,7 @@ class OrderService
     public function show($orderNumber): JsonResponse
     {
         $order = Order::query()->where('order_number', $orderNumber)
-            ->with('tags')
+            ->with(['tags', 'items'])
             ->first();
 
         if (!$order) {
@@ -178,7 +191,7 @@ class OrderService
         }
 
         try {
-            $response = Http::get('https://external.integration/api/status/'.$order->order_number);
+            $response = Http::get('https://external.integration/api/status/' . $order->order_number);
 
             if ($response->successful()) {
                 $orderData = $response->json();
