@@ -24,7 +24,7 @@ class OrderUpdateFeatureTest extends TestCase
         $orderDataForUpdate = [
             'id' => $order->id,
             'status' => 'shipped',
-            'tags' => ['New1', 'New2'],
+            'tags' => ['New1', 'New2']
         ];
 
         $response = $this->postJson('/api/v1/orders/status', $orderDataForUpdate);

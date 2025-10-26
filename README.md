@@ -1,61 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🧾 Order Tracking API — Laravel 12
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Purpose:** Technical assignment — API for order management and external status integration.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📖 Project Overview
+This API provides functionality to create, update, and retrieve orders with tags and items.  
+It also integrates with an external API to update order statuses, and uses **Laravel Events**, **Listeners**, and **Queued Jobs** to log notifications asynchronously.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**API Documentation:**  
+👉 [View on Postman](https://documenter.getpostman.com/view/14049462/2sB3Wk14oG)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 Features
+- Create and manage **orders**, **tags**, and **order items**
+- Retrieve full order details with relations
+- Update order **status** and **tags**
+- Event-driven notifications via **queues (jobs + listeners)**
+- JSON-based responses and validation handling
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## ⚙️ Tech Stack
+- **Framework:** Laravel 12
+- **Database:** MySQL 8
+- **Queue:** Database
+- **Containerization:** Docker + Docker Compose
+- **Language:** PHP 8.3
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 🧩 Main Endpoints
+| Method | Endpoint | Description |
+|:-------|:----------|:-------------|
+| 🟢 **POST** | `/api/v1/orders` | Create new order with tags and items |
+| 🔵 **GET** | `/api/v1/orders` | List all orders (filter by status/tags) |
+| 🔵 **GET** | `/api/v1/orders/{order_number}` | Get order details |
+| 🟠 **POST** | `/api/v1/orders/status` | Update order status and/or tags |
+| 🔵 **GET** | `/api/v1/orders/{order_number}/external` | Sync status from external API for TEST |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## ⚙️ Events & Queues
+| Component | Purpose |
+|------------|----------|
+| **Event** | `OrderStatusChanged` — triggered after order status or tags change |
+| **Listener** | `SendOrderUpdatedNotification` — handles event logic |
+| **Job** | `SendOrderNotificationJob` — executes asynchronously and logs update message |
 
-## Contributing
+**Example log output:**
+```log
+[2025-10-26 11:10:26] local.INFO: Order updated {"order_id":2,"order_number":"ORD-4059","status":"shipped","tags":["New1","New2"],"updated_at":"2025-10-26 11:10:25"}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
+### 🧪 Test results
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+PASS  Tests\Feature\OrderCreateFeatureTest
+✓ can create a new order                                               0.08s  
+✓ order creation fails with empty fields                               0.01s  
 
-## Security Vulnerabilities
+PASS  Tests\Feature\OrderUpdateExternalFeatureTest
+✓ updates order when external api returns success                      0.02s  
+✓ return error when external api returns http error                    0.01s  
+✓ logs exception when external api throws error                        0.01s  
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+PASS  Tests\Feature\OrderUpdateFeatureTest
+✓ order updated event is dispatched when status and tags are changed   0.01s  
 
-## License
+Tests:    6 passed (42 assertions)
+Duration: 0.16s
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## 🧱 Installation and launch
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/evgeny92/order-tracking-api.git
+cd order-tracking-api
+
+# 2. Copy .env file
+cp .env.example .env
+
+# 3. Run containers
+docker compose up -d
+
+# 4. Install dependencies
+docker compose exec php composer install
+
+# 5. Run migrations
+docker compose exec php php artisan migrate
+
+# 6. Start the queue
+docker compose exec php php artisan queue:work
+
+# 7. Check tests
+docker compose exec php php artisan test
+
+The project will be available at:
+👉 http://localhost:8002
