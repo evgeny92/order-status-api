@@ -52,9 +52,6 @@ class OrderService
 
     public function store($request): JsonResponse
     {
-
-        //dd($request->all());
-
         try {
 
             DB::beginTransaction();

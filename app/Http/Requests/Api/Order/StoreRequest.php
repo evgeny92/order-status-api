@@ -25,7 +25,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'order_number' => 'required|string:max:255|unique:orders',
-            'total_amount' => 'required|numeric|min:0.01|max:9999.99',
+            //'total_amount' => 'required|numeric|min:0.01|max:9999.99',
             'tags' => 'array|nullable',
             'tags.*' => 'string|max:255',
             'items' => 'required|array',

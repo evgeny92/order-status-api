@@ -24,8 +24,6 @@ class SendOrderNotificationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        //Log::channel('orders')->info("Order #{$this->order->id} updated. Status: {$this->order->status->value}");
-
         Log::channel('orders')->info('Order updated', [
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
