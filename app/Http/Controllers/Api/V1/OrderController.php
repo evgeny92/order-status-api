@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Order\FilterRequest;
 use App\Http\Requests\Api\Order\StoreRequest;
+use App\Http\Requests\Api\Order\UpdateStatusRequest;
+use App\Models\Order;
 use App\Services\Order\OrderService;
 
 class OrderController extends Controller
@@ -26,4 +28,10 @@ class OrderController extends Controller
     {
         return $this->orderService->show($orderNumber);
     }
+
+    public function updateOrderStatus(UpdateStatusRequest $request)
+    {
+        return $this->orderService->updateOrderStatus($request);
+    }
+
 }

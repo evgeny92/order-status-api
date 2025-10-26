@@ -7,6 +7,5 @@ Route::prefix('v1')->controller(OrderController::class)->group(function () {
     Route::get('orders', 'index');
     Route::post('orders', 'store');
     Route::get('orders/{order_number}', 'show');
-
-
+    Route::post('orders/status', 'updateOrderStatus');
 });

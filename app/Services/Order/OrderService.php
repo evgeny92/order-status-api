@@ -2,13 +2,14 @@
 
 namespace App\Services\Order;
 
+use App\Enum\Order\OrderStatus;
+use App\Events\OrderUpdated;
 use App\Http\Resources\Order\OrderCreatedResource;
 use App\Http\Resources\Order\OrdersAllResource;
 use App\Http\Resources\Order\OrderShowResource;
+use App\Http\Resources\Order\OrderUpdatedResource;
 use App\Models\Order;
-use App\Models\Tag;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 
 class OrderService
@@ -24,14 +25,15 @@ class OrderService
             })
             ->when($orderFilterTags, function ($query) use ($orderFilterTags) {
                 return $query->whereHas('tags', function ($query) use ($orderFilterTags) {
-                    $query->whereIn('slug', $orderFilterTags);
+                    $query->whereIn('name', $orderFilterTags);
+                    //$query->whereIn('slug', $orderFilterTags);
                 });
             })
             ->with('tags')
             ->orderByDesc('created_at')
             ->get();
 
-        if($orders->isNotEmpty()) {
+        if ($orders->isNotEmpty()) {
             return response()->json([
                 'status' => true,
                 'message' => 'Orders retrieved successfully.',
@@ -54,27 +56,14 @@ class OrderService
             $order = new Order();
             $order->order_number = $request->order_number;
             $order->total_amount = $request->total_amount;
-            $order->status = 'pending';
+            $order->status = OrderStatus::Pending;
             $order->save();
 
-            $tags = $request->tags;
+            $orderTags = $request->tags;
 
-            if (!empty($tags) && count($tags)) {
-
-                $tagIds = [];
-                foreach ($tags as $tag) {
-
-                    $tagSlug = Str::slug($tag, '-');
-
-                    $tagItem = Tag::query()->firstOrCreate(
-                        ['slug' => $tagSlug],
-                        ['name' => $tag]
-                    );
-
-                    $tagIds[$tagItem->id] = ['added_at' => now()];
-                }
-
-                $order->tags()->sync($tagIds);
+            if (!empty($orderTags) && count($orderTags)) {
+                //Prepare tags from Trait
+                $order->syncTags($orderTags);
             }
 
             DB::commit();
@@ -114,6 +103,64 @@ class OrderService
             'message' => 'Order details retrieved successfully.',
             'data' => new OrderShowResource($order),
         ]);
+    }
+
+    public function updateOrderStatus($request)
+    {
+        $orderId = $request->id;
+        $orderStatus = $request->status;
+        $orderTags = $request->tags;
+
+        $order = Order::query()->where('id', $orderId)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found.',
+            ]);
+        }
+
+        try {
+
+            DB::beginTransaction();
+
+            $changed = false;
+
+            if ($orderStatus && $order->status->value !== $orderStatus) {
+                $order->status = OrderStatus::from($orderStatus)->value;
+                $order->save();
+                $changed = true;
+            }
+
+            if (!empty($orderTags) && count($orderTags)) {
+                //Prepare tags from Trait
+                $order->syncTags($orderTags);
+                $order->load('tags');
+                $changed = true;
+            }
+
+            // If was changes, call the event
+            if ($changed) {
+                event(new OrderUpdated($order));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order updated successfully',
+                'data' => new OrderUpdatedResource($order)
+            ]);
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong while updating the order.',
+                'error' => config('app.debug') ? $exception->getMessage() : null,
+            ]);
+        }
     }
 
 }

@@ -3,11 +3,11 @@
 namespace App\Http\Requests\Api\Order;
 
 use App\Enum\Order\OrderStatus;
+use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
-class FilterRequest extends FormRequest
+class UpdateStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,29 +25,14 @@ class FilterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => 'required|integer|exists:orders,id',
             'status' => [
-                'nullable',
+                'required',
                 'string',
                 Rule::enum(OrderStatus::class),
             ],
-            'tags' => 'nullable|array',
+            'tags' => 'array|nullable',
+            'tags.*' => 'string|max:255',
         ];
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $tags = $this->input('tags', []);
-
-        if (is_string($tags)) {
-            $tags = [$tags];
-        }
-
-        $tags = array_filter($tags, fn($tag) => !empty($tag));
-
-        //$tags = array_map(fn($tag) => Str::slug($tag, '-'), $tags);
-
-        $this->merge([
-            'tags' => $tags,
-        ]);
     }
 }
