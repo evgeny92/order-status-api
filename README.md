@@ -80,26 +80,58 @@ Duration: 0.16s
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/evgeny92/order-tracking-api.git
+git clone https://github.com/evgeny92/order-status-api.git
 cd order-tracking-api
 
 # 2. Copy .env file
 cp .env.example .env
 
-# 3. Run containers
+# 3. Build images
+docker compose build
+
+# 4. Run containers
 docker compose up -d
 
-# 4. Install dependencies
+# 5. Install dependencies
 docker compose exec php composer install
 
-# 5. Run migrations
+# 6. Generate APP_KEY
+docker compose exec php php artisan key:generate
+
+# 7. Run migrations
 docker compose exec php php artisan migrate
 
-# 6. Start the queue
+# 8. Start the queue
 docker compose exec php php artisan queue:work
 
-# 7. Check tests
+# 9. Check tests
 docker compose exec php php artisan test
 
 The project will be available at:
 👉 http://localhost:8002
+
+```
+
+## ⚙️ Example .env configuration
+
+```bash
+APP_NAME="Order Status API"
+APP_ENV=local
+APP_KEY=      # generated via: php artisan key:generate
+APP_DEBUG=true
+APP_URL=http://localhost:8002
+
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=order_status_api
+DB_USERNAME=root
+DB_PASSWORD=Pas123456
+
+QUEUE_CONNECTION=database
+SESSION_DRIVER=file
+CACHE_STORE=file
+
+# Sync user ID and group ID to avoid permission issues on development
+UID=1000
+GID=1000
