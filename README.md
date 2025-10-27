@@ -81,10 +81,12 @@ Duration: 0.16s
 ```bash
 # 1. Clone the repository
 git clone https://github.com/evgeny92/order-status-api.git
-cd order-tracking-api
+cd order-status-api
 
 # 2. Copy .env file
 cp .env.example .env
+
+!!!Before running the containers, make sure the ports defined in your docker-compose.yml file are not already in use on your system.
 
 # 3. Build images
 docker compose build
